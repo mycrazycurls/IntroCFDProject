@@ -892,8 +892,23 @@ void compute_time_step( Array3& u, Array2& dt, double& dtmin )
 /* !************************************************************** */
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
-    
-    
+
+    for (j = 1; j < jmax-1; j++) {
+        for (i = 1; i < imax-1; i++) {
+
+            dtvisc = dx * dy * fourth * rho / rmu;
+            uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
+            beta2 = pow2(max(uvel2, rkappa * vel2ref));
+            lambda_x = half * (abs(u(i, j, 1)) + sqrt(pow2(u(i, i, 1)) + four * beta2));
+            lambda_y = half * (abs(u(i, j, 2)) + sqrt(pow2(u(i, i, 2)) + four * beta2));
+            lambda_max = max(lambda_x, lambda_y);
+            dtconv = max(dx, dy) / lambda_max;
+
+            dtmin = min(dtconv, dtvisc);
+            dt(i,j) = cfl * dtmin;
+
+        }
+    }
 
 }  
 
@@ -921,8 +936,6 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
 /* !************************************************************** */
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
-
-    // TODO - extrapolate the 1 index (unkown)
     
     for (j = 2; j < jmax - 2; j++) {
         for (i = 2; i < imax-2; i++) {
@@ -934,8 +947,8 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
             d4pdx4 = (u(i + 2, j, 0) - four * u(i + 1, j, 0) + six * u(i, j, 0) - four * u(i - 1, j, 0) + u(i - 2, j, 0)) / pow4(dx);
             d4pdy4 = (u(i, j + 2, 0) - four * u(i, j + 1, 0) + six * u(i, j, 0) - four * u(i, j - 1, 0) + u(i, j - 2, 0)) / pow4(dy);
 
-            viscx(i, j) = (-1.0 * lambda_x * Cx * pow3(dx) * d4pdx4) / (beta2);
-            viscy(i, j) = (-1.0 * lambda_y * Cy * pow3(dy) * d4pdy4) / (beta2);
+            viscx(i, j) = -(lambda_x * Cx * pow3(dx) * d4pdx4) / (beta2);
+            viscy(i, j) = -(lambda_y * Cy * pow3(dy) * d4pdy4) / (beta2);
 
         }
     }
