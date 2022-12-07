@@ -43,7 +43,7 @@ using namespace std;
   const int nmax = 500000;             /* Maximum number of iterations */
   const int iterout = 5000;             /* Number of time steps between solution output */
   const int imms = 1;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
-  const int isgs = 1;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
+  const int isgs = 0;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
   const int irstr = 0;                  /* Restart flag: = 1 for restart (file 'restart.in', = 0 for initial run */
   const int ipgorder = 0;               /* Order of pressure gradient: 0 = 2nd, 1 = 3rd (not needed) */
   const int lim = 0;                    /* variable to be used as the limiter sensor (= 0 for pressure) */
@@ -1008,8 +1008,33 @@ void SGS_forward_sweep( Array3& u, Array2& viscx, Array2& viscy, Array2& dt, Arr
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
 
+    int i;
+    int j;
 
+    for (j = 1; j < jmax - 1; j++) {
+        for (i = 1; i < imax - 1; i++) {
 
+            uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
+            beta2 = pow2(max(uvel2, rkappa * vel2ref));
+
+            dpdx = (u(i + 1, j, 0) - u(i - 1, j, 0)) * half / dx;
+            dudx = (u(i + 1, j, 1) - u(i - 1, j, 1)) * half / dx;
+            dvdx = (u(i + 1, j, 2) - u(i - 1, j, 2)) * half / dx;
+            dpdy = (u(i, j + 1, 0) - u(i, j - 1, 0)) * half / dy;
+            dudy = (u(i, j + 1, 1) - u(i, j - 1, 1)) * half / dy;
+            dvdy = (u(i, j + 1, 2) - u(i, j - 1, 2)) * half / dy;
+
+            d2udx2 = (u(i + 1, j, 1) - two * u(i, j, 1) + u(i - 1, j, 1)) / pow2(dx);
+            d2vdx2 = (u(i + 1, j, 2) - two * u(i, j, 2) + u(i - 1, j, 2)) / pow2(dx);
+            d2udy2 = (u(i, j + 1, 1) - two * u(i, j, 1) + u(i, j - 1, 1)) / pow2(dy);
+            d2vdy2 = (u(i, j + 1, 2) - two * u(i, j, 2) + u(i, j - 1, 2)) / pow2(dy);
+
+            u(i, j, 0) = u(i, j, 0) - beta2 * dt(i, j) * (rho * dudx + rho * dvdy + viscx(i, j) + viscy(i, j) - s(i, j, 0));
+            u(i, j, 1) = u(i, j, 1) - dt(i, j) * rhoinv * (rho * u(i, j, 1) * dudx + rho * u(i, j, 2) * dudy + dpdx - rmu * d2udx2 - rmu * d2udy2 - s(i, j, 1));
+            u(i, j, 2) = u(i, j, 2) - dt(i, j) * rhoinv * (rho * u(i, j, 1) * dvdx + rho * u(i, j, 2) * dvdy + dpdy - rmu * d2vdx2 - rmu * d2vdy2 - s(i, j, 2));
+
+        }
+    }
 
 }
 
@@ -1046,7 +1071,33 @@ void SGS_backward_sweep( Array3& u, Array2& viscx, Array2& viscy, Array2& dt, Ar
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
 
+    int i;
+    int j;
 
+    for (i = imax-2; i > 0; i--) {
+        for (j = jmax-2; j > 0; j--) {
+
+            uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
+            beta2 = pow2(max(uvel2, rkappa * vel2ref));
+
+            dpdx = (u(i + 1, j, 0) - u(i - 1, j, 0)) * half / dx;
+            dudx = (u(i + 1, j, 1) - u(i - 1, j, 1)) * half / dx;
+            dvdx = (u(i + 1, j, 2) - u(i - 1, j, 2)) * half / dx;
+            dpdy = (u(i, j + 1, 0) - u(i, j - 1, 0)) * half / dy;
+            dudy = (u(i, j + 1, 1) - u(i, j - 1, 1)) * half / dy;
+            dvdy = (u(i, j + 1, 2) - u(i, j - 1, 2)) * half / dy;
+
+            d2udx2 = (u(i + 1, j, 1) - two * u(i, j, 1) + u(i - 1, j, 1)) / pow2(dx);
+            d2vdx2 = (u(i + 1, j, 2) - two * u(i, j, 2) + u(i - 1, j, 2)) / pow2(dx);
+            d2udy2 = (u(i, j + 1, 1) - two * u(i, j, 1) + u(i, j - 1, 1)) / pow2(dy);
+            d2vdy2 = (u(i, j + 1, 2) - two * u(i, j, 2) + u(i, j - 1, 2)) / pow2(dy);
+
+            u(i, j, 0) = u(i, j, 0) - beta2 * dt(i, j) * (rho * dudx + rho * dvdy + viscx(i, j) + viscy(i, j) - s(i, j, 0));
+            u(i, j, 1) = u(i, j, 1) - dt(i, j) * rhoinv * (rho * u(i, j, 1) * dudx + rho * u(i, j, 2) * dudy + dpdx - rmu * d2udx2 - rmu * d2udy2 - s(i, j, 1));
+            u(i, j, 2) = u(i, j, 2) - dt(i, j) * rhoinv * (rho * u(i, j, 1) * dvdx + rho * u(i, j, 2) * dvdy + dpdy - rmu * d2vdx2 - rmu * d2vdy2 - s(i, j, 2));
+
+        }
+    }
 
 
 }
@@ -1179,6 +1230,12 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
 
 
 
+
+
+
+
+
+
     /* Write iterative residuals every "residualOut" iterations */
     if( ((n%residualOut)==0)||(n==ninit) )
     {
@@ -1221,8 +1278,19 @@ void Discretization_Error_Norms( Array3& u )
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
 
+        for (int k = 0; k < neq; k++) {
+            for (int j = 1; j < jmax - 1; j++) {
+                for (int i = 1; i < imax - 1; i++) {
 
 
+                    y = (ymax - ymin) * (double)(j) / (double)(jmax - 1);
+                    x = (xmax - xmin) * (double)(i) / (double)(imax - 1);
+
+                    DE = u(i, j, k) - umms(i, j, k);
+
+                }
+            }
+        }
 
     }
 }
