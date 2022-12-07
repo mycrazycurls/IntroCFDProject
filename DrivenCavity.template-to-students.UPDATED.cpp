@@ -494,7 +494,48 @@ void bndry( Array3& u )
 /* !************************************************************** */
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
+   
+   /* Side Wall Boundary Conditions */
+   for (j = 1; j < jmax - 1; j++) {
 
+       i = 0;
+       u(i, j, 0) = zero;
+       u(i, j, 1) = zero;
+       u(i, j, 2) = zero;
+
+       // Presssure Left wall
+       u(0, j, 0) = two * u(1, j, 0) - u(2, j, 0);    /* 2nd Order BC */
+
+       i = imax - 1;
+       u(i, j, 0) = zero;
+       u(i, j, 1) = zero;
+       u(i, j, 2) = zero;
+
+       // Pressure Right wall
+       u(imax - 1, j, 0) = two * u(imax - 2, j, 0) - u(imax - 3, j, 0);   /* 2nd Order BC */
+
+   }
+
+   /* Top and Bottom Wall Boundary Conditions */
+   for (i = 0; i < imax; i++) {
+
+       j = 0; 
+       u(i, j, 0) = zero;
+       u(i, j, 1) = zero;
+       u(i, j, 2) = zero;
+
+       // Pressure Bottom wall
+       u(i, 0, 0) = two * u(i, 1, 0) - u(i, 2, 0);   /* 2nd Order BC */
+
+       j = jmax - 1;
+       u(i, j, 0) = uinf;
+       u(i, j, 1) = uinf;
+       u(i, j, 2) = uinf;
+
+       // Pressure top wall
+       u(i, jmax - 1, 0) = two * u(i, jmax - 2, 0) - u(i, jmax - 3, 0);   /* 2nd Order BC */
+
+   }
 
 
 }
@@ -851,8 +892,8 @@ void compute_time_step( Array3& u, Array2& dt, double& dtmin )
 /* !************************************************************** */
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
-
-
+    
+    
 
 }  
 
@@ -880,7 +921,12 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
 /* !************************************************************** */
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
+    
+    uvel2 = u(i, i, i);
+    beta2 = rkappa*vel2ref;
 
+    viscx(i,j) = (-1 * lambda_x * Cx * pow3(dx) * d4pdx4) / (beta2);
+    viscy(i,j) = (-1 * lambda_x * Cx * pow3(dx) * d4pdx4) / (beta2);
 
 
 }
@@ -1149,6 +1195,7 @@ int main()
     double resTest;
     int n = 0;  //Iteration number
 
+
                                                       
     /*--------- Solution variables declaration ----------------------*/
       
@@ -1279,6 +1326,8 @@ notconverged:
     fclose(fp2);
     //$$$$$$   fclose(fp6); /* Uncomment for debug output */
 
+  
+    system("pause");
     return 0;
 }
 
