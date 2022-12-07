@@ -40,7 +40,7 @@ using namespace std;
   
 /*--------- User sets inputs here  --------*/
 
-  const int nmax = 500000;             /* Maximum number of iterations */
+  const int nmax = 500;             /* Maximum number of iterations */
   const int iterout = 5000;             /* Number of time steps between solution output */
   const int imms = 1;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
   const int isgs = 0;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
@@ -1227,13 +1227,21 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
 
+    for (j = 0; j < jmax; j++) {
+        for (i = 0; i < imax; i++) {
 
+            res[0] = res[0] + pow2((u(i, j, 0) - uold(i, j, 0)) / dt(i, j));
+            res[1] = res[1] + pow2((u(i, j, 1) - uold(i, j, 1)) / dt(i, j));
+            res[2] = res[2] + pow2((u(i, j, 2) - uold(i, j, 2)) / dt(i, j));
 
+        }
+    }
 
+    res[0] = sqrt(res[0] / (imax * jmax));
+    res[1] = sqrt(res[1] / (imax * jmax));
+    res[2] = sqrt(res[2] / (imax * jmax));
 
-
-
-
+    conv = min(min(res[1] / resinit[1], res[2] / resinit[2]), res[3] / resinit[3]);
 
 
     /* Write iterative residuals every "residualOut" iterations */
@@ -1282,8 +1290,8 @@ void Discretization_Error_Norms( Array3& u )
         for (int k = 0; k < neq; k++) {
 
             double maxde = fsmall;
-            double onesum = 0.0;
-            double twosum = 0.0;
+            double onesum = zero;
+            double twosum = zero;
 
             // Loop through every node in mesh
             for (int j = 0; j < jmax; j++) {
@@ -1297,14 +1305,14 @@ void Discretization_Error_Norms( Array3& u )
 
                     maxde = max(maxde, DE);
                     onesum = onesum + DE;
-                    twosum = twosum + pow2(DE) / (imax * jmax);
+                    twosum = twosum + pow2(DE);
 
                 }
             }
 
             rLinfnorm[k] = maxde;
-            rL1norm[k] = onesum;
-            rL2norm[k] = sqrt(twosum);
+            rL1norm[k] = onesum / (imax * jmax);
+            rL2norm[k] = sqrt(twosum / (imax * jmax));
             
         }
 
