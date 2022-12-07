@@ -921,13 +921,45 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
 /* !************************************************************** */
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
+
+    // TODO - extrapolate the 1 index (unkown)
     
-    uvel2 = u(i, i, i);
-    beta2 = rkappa*vel2ref;
+    for (j = 2; j < jmax - 2; j++) {
+        for (i = 2; i < imax-2; i++) {
 
-    viscx(i,j) = (-1 * lambda_x * Cx * pow3(dx) * d4pdx4) / (beta2);
-    viscy(i,j) = (-1 * lambda_x * Cx * pow3(dx) * d4pdx4) / (beta2);
+            uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
+            beta2 = pow2(max(uvel2, rkappa*vel2ref));
+            lambda_x = half * (abs(u(i, j, 1)) + sqrt(pow2(u(i, i, 1)) + four * beta2)); 
+            lambda_y = half * (abs(u(i, j, 2)) + sqrt(pow2(u(i, i, 2)) + four * beta2));
+            d4pdx4 = (u(i + 2, j, 0) - four * u(i + 1, j, 0) + six * u(i, j, 0) - four * u(i - 1, j, 0) + u(i - 2, j, 0)) / pow4(dx);
+            d4pdy4 = (u(i, j + 2, 0) - four * u(i, j + 1, 0) + six * u(i, j, 0) - four * u(i, j - 1, 0) + u(i, j - 2, 0)) / pow4(dy);
 
+            viscx(i, j) = (-1.0 * lambda_x * Cx * pow3(dx) * d4pdx4) / (beta2);
+            viscy(i, j) = (-1.0 * lambda_y * Cy * pow3(dy) * d4pdy4) / (beta2);
+
+        }
+    }
+
+    /* Side Wall Extrapolations */
+    for (j = 2; j < jmax - 2; j++) {
+
+        i = 1;
+        u(i, j, 0) = two * u(2, j, 0) - u(3, j, 0);
+
+        i = imax-1;
+        u(i, j, 0) = two * u(imax-2, j, 0) - u(imax-3, j, 0);
+    }
+
+    /* Top and Bottom Extrapolation */
+    for (i = 1; i < imax-1; i++) {
+
+        j = 1;
+        u(i, j, 0) = two * u(i, 2, 0) - u(i, 3, 0);
+
+        j = jmax - 1;
+        u(i, j, 0) = two * u(i, imax - 2, 0) - u(i, imax - 3, 0);
+
+    }
 
 }
 
