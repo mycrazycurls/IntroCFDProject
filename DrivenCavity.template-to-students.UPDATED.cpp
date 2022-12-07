@@ -1278,18 +1278,34 @@ void Discretization_Error_Norms( Array3& u )
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
 
+        // Loop through each target variable (pressure, u, v)
         for (int k = 0; k < neq; k++) {
-            for (int j = 1; j < jmax - 1; j++) {
-                for (int i = 1; i < imax - 1; i++) {
+
+            double maxde = fsmall;
+            double onesum = 0.0;
+            double twosum = 0.0;
+
+            // Loop through every node in mesh
+            for (int j = 0; j < jmax; j++) {
+                for (int i = 0; i < imax; i++) {
 
 
                     y = (ymax - ymin) * (double)(j) / (double)(jmax - 1);
                     x = (xmax - xmin) * (double)(i) / (double)(imax - 1);
 
-                    DE = u(i, j, k) - umms(i, j, k);
+                    DE = abs(u(i, j, k) - umms(x, y, k));
+
+                    maxde = max(maxde, DE);
+                    onesum = onesum + DE;
+                    twosum = twosum + pow2(DE) / (imax * jmax);
 
                 }
             }
+
+            rLinfnorm[k] = maxde;
+            rL1norm[k] = onesum;
+            rL2norm[k] = sqrt(twosum);
+            
         }
 
     }
