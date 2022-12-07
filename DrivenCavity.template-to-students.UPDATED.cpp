@@ -1244,6 +1244,7 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
     conv = min(min(res[1] / resinit[1], res[2] / resinit[2]), res[3] / resinit[3]);
 
 
+
     /* Write iterative residuals every "residualOut" iterations */
     if( ((n%residualOut)==0)||(n==ninit) )
     {
