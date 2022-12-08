@@ -923,7 +923,7 @@ void compute_time_step( Array3& u, Array2& dt, double& dtmin )
             lambda_x = half * (abs(u(i, j, 1)) + sqrt(pow2(u(i, i, 1)) + four * beta2));
             lambda_y = half * (abs(u(i, j, 2)) + sqrt(pow2(u(i, i, 2)) + four * beta2));
             lambda_max = max(lambda_x, lambda_y);
-            dtconv = max(dx, dy) / lambda_max;
+            dtconv = min(dx, dy) / lambda_max;
 
             dtmin = min(dtconv, dtvisc);
             dt(i,j) = (double)cfl * dtmin;
