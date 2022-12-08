@@ -1252,6 +1252,7 @@ void pressure_rescaling( Array3& u )
 
 void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, double res[neq], double resinit[neq], int ninit, double rtime, double dtmin, double& conv)
 {
+
   /* 
   Uses global variable(s): zero
   Uses global variable(s): imax, jmax, neq, fsmall (not used)
@@ -1294,6 +1295,11 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
 
     conv = min(min(res[0] / resinit[0], res[1] / resinit[1]), res[2] / resinit[2]);
 
+    if (n == 1) {
+        resinit[0] = res[0];
+        resinit[1] = res[1];
+        resinit[2] = res[2];
+    }
 
 
     /* Write iterative residuals every "residualOut" iterations */
@@ -1365,8 +1371,10 @@ void Discretization_Error_Norms( Array3& u )
             rLinfnorm[k] = maxde;
             rL1norm[k] = onesum / (imax * jmax);
             rL2norm[k] = sqrt(twosum / (imax * jmax));
-            
+    
         }
+
+        printf("%10e %10e %10e\n", rL2norm[0], rL2norm[1], rL2norm[2]);
 
     }
 }
@@ -1539,8 +1547,8 @@ notconverged:
     fclose(fp2);
     //$$$$$$   fclose(fp6); /* Uncomment for debug output */
 
-  
     system("pause");
+
     return 0;
 }
 
