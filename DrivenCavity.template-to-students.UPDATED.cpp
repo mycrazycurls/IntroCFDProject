@@ -11,8 +11,8 @@
 using namespace std;
 
 /************* Following are fixed parameters for array sizes **************/
-#define imax 33     /* Number of points in the x-direction (use odd numbers only) */
-#define jmax 33     /* Number of points in the y-direction (use odd numbers only) */
+#define imax 65     /* Number of points in the x-direction (use odd numbers only) */
+#define jmax 65     /* Number of points in the y-direction (use odd numbers only) */
 #define neq 3       /* Number of equation to be solved ( = 3: mass, x-mtm, y-mtm) */
 
 /**********************************************/
@@ -602,6 +602,17 @@ void bndrymms( Array3& u )
 
         u(i,jmax-1,0) = two*u(i,jmax-2,0) - u(i,jmax-3,0);   /* 2nd Order BC */
     }
+
+    /*
+    printf("BOUNDARY CONDITIONS FOR MANUFACTURED SOLUTION\n");
+    for (j = 0; j < jmax; j++) {
+        for (i = 0; i < imax; i++) {
+
+            printf("%10.1e ", u(i, j, 1));
+        }
+        printf("\n\n");
+    }
+    */
 }
 
 /**************************************************************************/
@@ -959,7 +970,7 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
         viscy(i, j) = two * viscy(2, j) - viscy(3, j);
         viscx(i, j) = two * viscx(2, j) - viscx(3, j);
 
-        i = imax-1;
+        i = imax - 2;
         viscy(i, j) = two * viscy(imax - 2, j) - viscy(imax - 3, j);
         viscx(i, j) = two * viscx(imax - 2, j) - viscx(imax - 3, j);
 
@@ -972,11 +983,25 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
         viscy(i, j) = two * viscy(i, 2) - viscy(i, 3);
         viscx(i, j) = two * viscx(i, 2) - viscx(i, 3);
 
-        j = jmax - 1;
+        j = jmax - 2;
         viscy(i, j) = two * viscy(i, imax - 2) - viscy(i, imax - 3);
         viscx(i, j) = two * viscx(i, imax - 2) - viscx(i, imax - 3);
 
     }
+
+    /*
+    printf("ARTIFICIAL VISCOSITY\n");
+    for (j = 0; j < jmax; j++) {
+        for (i = 0; i < imax; i++) {
+
+            viscx(i, j) = -(lambda_x * Cx * pow3(dx) * d4pdx4) / (beta2);
+            viscy(i, j) = -(lambda_y * Cy * pow3(dy) * d4pdy4) / (beta2);
+
+            printf("%10.1e ", viscy(i, j));
+        }
+        printf("\n\n");
+    }
+    */
 
 }
 
@@ -1147,7 +1172,7 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
     for (j = 1; j < jmax - 1; j++) {
         for (i = 1; i < imax - 1; i++) {
 
-            uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
+            uvel2 = pow2(uold(i, j, 1)) + pow2(uold(i, j, 2));
             beta2 = pow2(max(uvel2, rkappa * vel2ref));
 
             dpdx = (uold(i + 1, j, 0) - uold(i - 1, j, 0)) * half / dx;
@@ -1169,8 +1194,16 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
         }
     }
 
+    /*
+    printf("POINT JACOBI\n");
+    for (j = 0; j < jmax; j++) {
+        for (i = 0; i < imax; i++) {
 
-
+            printf("%10.1e ", u(i, j, 1));
+        }
+        printf("\n\n");
+    }
+    */
 
 
 }
