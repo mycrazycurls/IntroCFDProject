@@ -11,8 +11,8 @@
 using namespace std;
 
 /************* Following are fixed parameters for array sizes **************/
-#define imax 65     /* Number of points in the x-direction (use odd numbers only) */
-#define jmax 65     /* Number of points in the y-direction (use odd numbers only) */
+#define imax 33     /* Number of points in the x-direction (use odd numbers only) */
+#define jmax 33     /* Number of points in the y-direction (use odd numbers only) */
 #define neq 3       /* Number of equation to be solved ( = 3: mass, x-mtm, y-mtm) */
 
 /**********************************************/
@@ -893,8 +893,8 @@ void compute_time_step( Array3& u, Array2& dt, double& dtmin )
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
 
-    for (j = 1; j < jmax-1; j++) {
-        for (i = 1; i < imax-1; i++) {
+    for (j = 0; j < jmax; j++) {
+        for (i = 0; i < imax; i++) {
 
             dtvisc = dx * dy * fourth * rho / rmu;
             uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
@@ -905,8 +905,7 @@ void compute_time_step( Array3& u, Array2& dt, double& dtmin )
             dtconv = max(dx, dy) / lambda_max;
 
             dtmin = min(dtconv, dtvisc);
-            dt(i,j) = cfl * dtmin;
-
+            dt(i,j) = (double)cfl * dtmin;
         }
     }
 
@@ -957,20 +956,25 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
     for (j = 2; j < jmax - 2; j++) {
 
         i = 1;
-        u(i, j, 0) = two * u(2, j, 0) - u(3, j, 0);
+        viscy(i, j) = two * viscy(2, j) - viscy(3, j);
+        viscx(i, j) = two * viscx(2, j) - viscx(3, j);
 
         i = imax-1;
-        u(i, j, 0) = two * u(imax-2, j, 0) - u(imax-3, j, 0);
+        viscy(i, j) = two * viscy(imax - 2, j) - viscy(imax - 3, j);
+        viscx(i, j) = two * viscx(imax - 2, j) - viscx(imax - 3, j);
+
     }
 
     /* Top and Bottom Extrapolation */
     for (i = 1; i < imax-1; i++) {
 
         j = 1;
-        u(i, j, 0) = two * u(i, 2, 0) - u(i, 3, 0);
+        viscy(i, j) = two * viscy(i, 2) - viscy(i, 3);
+        viscx(i, j) = two * viscx(i, 2) - viscx(i, 3);
 
         j = jmax - 1;
-        u(i, j, 0) = two * u(i, imax - 2, 0) - u(i, imax - 3, 0);
+        viscy(i, j) = two * viscy(i, imax - 2) - viscy(i, imax - 3);
+        viscx(i, j) = two * viscx(i, imax - 2) - viscx(i, imax - 3);
 
     }
 
@@ -1135,6 +1139,8 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
 
+  
+
     int i;
     int j;
 
@@ -1162,6 +1168,11 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
 
         }
     }
+
+
+
+
+
 }
 
 /**************************************************************************/
@@ -1230,9 +1241,14 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
     for (j = 0; j < jmax; j++) {
         for (i = 0; i < imax; i++) {
 
-            res[0] = res[0] + pow2((u(i, j, 0) - uold(i, j, 0)) / dt(i, j));
-            res[1] = res[1] + pow2((u(i, j, 1) - uold(i, j, 1)) / dt(i, j));
-            res[2] = res[2] + pow2((u(i, j, 2) - uold(i, j, 2)) / dt(i, j));
+            double deltat = dt(i, j);
+            double res0 = pow2((u(i, j, 0) - uold(i, j, 0)) / deltat);
+            double res1 = pow2((u(i, j, 1) - uold(i, j, 1)) / deltat);
+            double res2 = pow2((u(i, j, 2) - uold(i, j, 2)) / deltat);
+
+            res[0] = res[0] + res0;
+            res[1] = res[1] + res1;
+            res[2] = res[2] + res2;
 
         }
     }
@@ -1241,7 +1257,7 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
     res[1] = sqrt(res[1] / (imax * jmax));
     res[2] = sqrt(res[2] / (imax * jmax));
 
-    conv = min(min(res[1] / resinit[1], res[2] / resinit[2]), res[3] / resinit[3]);
+    conv = min(min(res[0] / resinit[0], res[1] / resinit[1]), res[2] / resinit[2]);
 
 
 
@@ -1249,12 +1265,12 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
     if( ((n%residualOut)==0)||(n==ninit) )
     {
         fprintf(fp1, "%d %e %e %e %e\n",n, rtime, res[0], res[1], res[2] );
-        printf("%d   %e   %e   %e   %e   %e\n",n, rtime, dtmin, res[0], res[1], res[2] );    
+        printf("%5d %11e %11e %11e %11e %11e\n",n, rtime, dtmin, res[0], res[1], res[2] );    
 
         /* Write header for iterative residuals every 20 residual printouts */
         if( ((n%(residualOut*20))==0)||(n==ninit) )
         {
-            printf("Iter. Time (s)   dt (s)      Continuity    x-Momentum    y-Momentum\n"); 
+            printf("Iter. Time (s)   dt (s)      Continuity    x-Momentum    y-Momentum\n");
         }    
     }
      
