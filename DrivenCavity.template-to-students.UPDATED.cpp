@@ -49,7 +49,7 @@ using namespace std;
   const int lim = 0;                    /* variable to be used as the limiter sensor (= 0 for pressure) */
   const int residualOut = 10;           /* Number of timesteps between residual output */
 
-  const double cfl  = 0.9;              /* CFL number used to determine time step */
+  const double cfl  = 0.1;              /* CFL number used to determine time step */
   const double Cx = 0.01;               /* Parameter for 4th order artificial viscosity in x */
   const double Cy = 0.01;               /* Parameter for 4th order artificial viscosity in y */
   const double toler = 1.e-10;          /* Tolerance for iterative residual convergence */
@@ -363,6 +363,16 @@ void PJ_iteration( boundaryConditionPointer set_boundary_conditions, Array3& u, 
            
     /* Set Boundary Conditions for u */
     set_boundary_conditions(u);
+
+
+    //printf("point jacobi after boundaries set\n");
+    //for (int j = 0; j < jmax; j++) {
+    //    for (int i = 0; i < imax; i++) {
+
+    //        printf("%10.1e ", u(i, j, 0));
+    //    }
+    //    printf("\n\n");
+    //}
 }
 
 /**************************************************************************/
@@ -603,16 +613,16 @@ void bndrymms( Array3& u )
         u(i,jmax-1,0) = two*u(i,jmax-2,0) - u(i,jmax-3,0);   /* 2nd Order BC */
     }
 
-    /*
-    printf("BOUNDARY CONDITIONS FOR MANUFACTURED SOLUTION\n");
+    
+    /*printf("boundary conditions for manufactured solution\n");
     for (j = 0; j < jmax; j++) {
         for (i = 0; i < imax; i++) {
 
-            printf("%10.1e ", u(i, j, 1));
+            printf("%10.1e ", u(i, j, 0));
         }
         printf("\n\n");
-    }
-    */
+    }*/
+    
 }
 
 /**************************************************************************/
@@ -954,11 +964,11 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
             beta2 = pow2(max(uvel2, rkappa*vel2ref));
             lambda_x = half * (abs(u(i, j, 1)) + sqrt(pow2(u(i, i, 1)) + four * beta2)); 
             lambda_y = half * (abs(u(i, j, 2)) + sqrt(pow2(u(i, i, 2)) + four * beta2));
-            d4pdx4 = (u(i + 2, j, 0) - four * u(i + 1, j, 0) + six * u(i, j, 0) - four * u(i - 1, j, 0) + u(i - 2, j, 0)) / pow4(dx);
-            d4pdy4 = (u(i, j + 2, 0) - four * u(i, j + 1, 0) + six * u(i, j, 0) - four * u(i, j - 1, 0) + u(i, j - 2, 0)) / pow4(dy);
+            d4pdx4 = (u(i + 2, j, 0) - four * u(i + 1, j, 0) + six * u(i, j, 0) - four * u(i - 1, j, 0) + u(i - 2, j, 0));
+            d4pdy4 = (u(i, j + 2, 0) - four * u(i, j + 1, 0) + six * u(i, j, 0) - four * u(i, j - 1, 0) + u(i, j - 2, 0));
 
-            viscx(i, j) = -(lambda_x * Cx * pow3(dx) * d4pdx4) / (beta2);
-            viscy(i, j) = -(lambda_y * Cy * pow3(dy) * d4pdy4) / (beta2);
+            viscx(i, j) = -(lambda_x * Cx * d4pdx4) / (beta2*dx);
+            viscy(i, j) = -(lambda_y * Cy * d4pdy4) / (beta2*dy);
 
         }
     }
@@ -971,8 +981,8 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
         viscx(i, j) = two * viscx(2, j) - viscx(3, j);
 
         i = imax - 2;
-        viscy(i, j) = two * viscy(imax - 2, j) - viscy(imax - 3, j);
-        viscx(i, j) = two * viscx(imax - 2, j) - viscx(imax - 3, j);
+        viscy(i, j) = two * viscy(i - 2, j) - viscy(i - 3, j);
+        viscx(i, j) = two * viscx(i - 2, j) - viscx(i - 3, j);
 
     }
 
@@ -984,25 +994,19 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
         viscx(i, j) = two * viscx(i, 2) - viscx(i, 3);
 
         j = jmax - 2;
-        viscy(i, j) = two * viscy(i, imax - 2) - viscy(i, imax - 3);
-        viscx(i, j) = two * viscx(i, imax - 2) - viscx(i, imax - 3);
+        viscy(i, j) = two * viscy(i, j - 1) - viscy(i, j - 2);
+        viscx(i, j) = two * viscx(i, j - 1) - viscx(i, j - 2);
 
     }
 
-    /*
-    printf("ARTIFICIAL VISCOSITY\n");
-    for (j = 0; j < jmax; j++) {
-        for (i = 0; i < imax; i++) {
-
-            viscx(i, j) = -(lambda_x * Cx * pow3(dx) * d4pdx4) / (beta2);
-            viscy(i, j) = -(lambda_y * Cy * pow3(dy) * d4pdy4) / (beta2);
-
-            printf("%10.1e ", viscy(i, j));
-        }
-        printf("\n\n");
-    }
-    */
-
+    //printf("ARTIFICIAL VISCOSITY\n");
+    //for (j = jmax-1; j >= 0; j--) {
+    //    for (i = 0; i < imax; i++) {
+    //        printf("%10.1e ", viscy(i, j));
+    //    }
+    //    printf("\n\n");
+    //}
+    
 }
 
 /**************************************************************************/
@@ -1164,13 +1168,13 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
 /* !************ADD CODING HERE FOR INTRO CFD STUDENTS************ */
 /* !************************************************************** */
 
-  
+
 
     int i;
     int j;
 
-    for (j = 1; j < jmax - 1; j++) {
-        for (i = 1; i < imax - 1; i++) {
+    for (j = 1; j < jmax-1; j++) {
+        for (i = 1; i < imax-1; i++) {
 
             uvel2 = pow2(uold(i, j, 1)) + pow2(uold(i, j, 2));
             beta2 = pow2(max(uvel2, rkappa * vel2ref));
@@ -1194,16 +1198,14 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
         }
     }
 
-    /*
-    printf("POINT JACOBI\n");
-    for (j = 0; j < jmax; j++) {
-        for (i = 0; i < imax; i++) {
+    //printf("Point Jacobi\n");
+    //for (int j = 0; j < jmax; j++) {
+    //    for (int i = 0; i < imax; i++) {
 
-            printf("%10.1e ", u(i, j, 1));
-        }
-        printf("\n\n");
-    }
-    */
+    //        printf("%10.1e ", u(i, j, 0));
+    //    }
+    //    printf("\n\n");
+    //}
 
 
 }
@@ -1279,9 +1281,9 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
             double res1 = pow2((u(i, j, 1) - uold(i, j, 1)) / deltat);
             double res2 = pow2((u(i, j, 2) - uold(i, j, 2)) / deltat);
 
-            res[0] = res[0] + res0;
-            res[1] = res[1] + res1;
-            res[2] = res[2] + res2;
+            res[0] += res0;
+            res[1] += res1;
+            res[2] += res2;
 
         }
     }
