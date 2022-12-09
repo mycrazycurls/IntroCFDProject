@@ -1044,7 +1044,7 @@ void SGS_forward_sweep( Array3& u, Array2& viscx, Array2& viscy, Array2& dt, Arr
             d2udy2 = (u(i, j + 1, 1) - two * u(i, j, 1) + u(i, j - 1, 1)) / pow2(dy);
             d2vdy2 = (u(i, j + 1, 2) - two * u(i, j, 2) + u(i, j - 1, 2)) / pow2(dy);
 
-            u(i, j, 0) = u(i, j, 0) - beta2 * deltatmax * (rho * dudx + rho * dvdy + viscx(i, j) + viscy(i, j) - s(i, j, 0));
+            u(i, j, 0) = u(i, j, 0) - beta2 * deltatmax * (rho * dudx + rho * dvdy - viscx(i, j) - viscy(i, j) - s(i, j, 0));
             u(i, j, 1) = u(i, j, 1) - deltatmax * rhoinv * (rho * u(i, j, 1) * dudx + rho * u(i, j, 2) * dudy + dpdx - rmu * d2udx2 - rmu * d2udy2 - s(i, j, 1));
             u(i, j, 2) = u(i, j, 2) - deltatmax * rhoinv * (rho * u(i, j, 1) * dvdx + rho * u(i, j, 2) * dvdy + dpdy - rmu * d2vdx2 - rmu * d2vdy2 - s(i, j, 2));
 
@@ -1107,7 +1107,7 @@ void SGS_backward_sweep( Array3& u, Array2& viscx, Array2& viscy, Array2& dt, Ar
             d2udy2 = (u(i, j + 1, 1) - two * u(i, j, 1) + u(i, j - 1, 1)) / pow2(dy);
             d2vdy2 = (u(i, j + 1, 2) - two * u(i, j, 2) + u(i, j - 1, 2)) / pow2(dy);
 
-            u(i, j, 0) = u(i, j, 0) - beta2 * deltatmax * (rho * dudx + rho * dvdy + viscx(i, j) + viscy(i, j) - s(i, j, 0));
+            u(i, j, 0) = u(i, j, 0) - beta2 * deltatmax * (rho * dudx + rho * dvdy - viscx(i, j) - viscy(i, j) - s(i, j, 0));
             u(i, j, 1) = u(i, j, 1) - deltatmax * rhoinv * (rho * u(i, j, 1) * dudx + rho * u(i, j, 2) * dudy + dpdx - rmu * d2udx2 - rmu * d2udy2 - s(i, j, 1));
             u(i, j, 2) = u(i, j, 2) - deltatmax * rhoinv * (rho * u(i, j, 1) * dvdx + rho * u(i, j, 2) * dvdy + dpdy - rmu * d2vdx2 - rmu * d2vdy2 - s(i, j, 2));
 
