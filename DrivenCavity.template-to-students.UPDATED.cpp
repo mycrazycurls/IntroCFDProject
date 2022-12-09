@@ -11,8 +11,8 @@
 using namespace std;
 
 /************* Following are fixed parameters for array sizes **************/
-#define imax 65     /* Number of points in the x-direction (use odd numbers only) */
-#define jmax 65     /* Number of points in the y-direction (use odd numbers only) */
+#define imax 33     /* Number of points in the x-direction (use odd numbers only) */
+#define jmax 33     /* Number of points in the y-direction (use odd numbers only) */
 #define neq 3       /* Number of equation to be solved ( = 3: mass, x-mtm, y-mtm) */
 
 /**********************************************/
@@ -40,14 +40,14 @@ using namespace std;
   
 /*--------- User sets inputs here  --------*/
 
-  const int nmax = 1000;             /* Maximum number of iterations */
+  const int nmax = 10000;             /* Maximum number of iterations */
   const int iterout = 5000;             /* Number of time steps between solution output */
   const int imms = 1;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
   const int isgs = 0;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
   const int irstr = 0;                  /* Restart flag: = 1 for restart (file 'restart.in', = 0 for initial run */
   const int ipgorder = 0;               /* Order of pressure gradient: 0 = 2nd, 1 = 3rd (not needed) */
   const int lim = 0;                    /* variable to be used as the limiter sensor (= 0 for pressure) */
-  const int residualOut = 10;           /* Number of timesteps between residual output */
+  const int residualOut = 100;           /* Number of timesteps between residual output */
 
   const double cfl  = 0.1;              /* CFL number used to determine time step */
   const double Cx = 0.01;               /* Parameter for 4th order artificial viscosity in x */
@@ -363,16 +363,6 @@ void PJ_iteration( boundaryConditionPointer set_boundary_conditions, Array3& u, 
            
     /* Set Boundary Conditions for u */
     set_boundary_conditions(u);
-
-
-    //printf("point jacobi after boundaries set\n");
-    //for (int j = 0; j < jmax; j++) {
-    //    for (int i = 0; i < imax; i++) {
-
-    //        printf("%10.1e ", u(i, j, 0));
-    //    }
-    //    printf("\n\n");
-    //}
 }
 
 /**************************************************************************/
@@ -919,7 +909,7 @@ void compute_time_step( Array3& u, Array2& dt, double& dtmin )
 
             dtvisc = dx * dy * fourth * rho / rmu;
             uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
-            beta2 = pow2(max(uvel2, rkappa * vel2ref));
+            beta2 = max(uvel2, rkappa * vel2ref);
             lambda_x = half * (abs(u(i, j, 1)) + sqrt(pow2(u(i, i, 1)) + four * beta2));
             lambda_y = half * (abs(u(i, j, 2)) + sqrt(pow2(u(i, i, 2)) + four * beta2));
             lambda_max = max(lambda_x, lambda_y);
@@ -961,7 +951,7 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
         for (i = 2; i < imax-2; i++) {
 
             uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
-            beta2 = pow2(max(uvel2, rkappa*vel2ref));
+            beta2 = max(uvel2, rkappa*vel2ref);
             lambda_x = half * (abs(u(i, j, 1)) + sqrt(pow2(u(i, i, 1)) + four * beta2)); 
             lambda_y = half * (abs(u(i, j, 2)) + sqrt(pow2(u(i, i, 2)) + four * beta2));
             d4pdx4 = (u(i + 2, j, 0) - four * u(i + 1, j, 0) + six * u(i, j, 0) - four * u(i - 1, j, 0) + u(i - 2, j, 0));
@@ -1048,7 +1038,7 @@ void SGS_forward_sweep( Array3& u, Array2& viscx, Array2& viscy, Array2& dt, Arr
         for (i = 1; i < imax - 1; i++) {
 
             uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
-            beta2 = pow2(max(uvel2, rkappa * vel2ref));
+            beta2 = max(uvel2, rkappa * vel2ref);
 
             dpdx = (u(i + 1, j, 0) - u(i - 1, j, 0)) * half / dx;
             dudx = (u(i + 1, j, 1) - u(i - 1, j, 1)) * half / dx;
@@ -1111,7 +1101,7 @@ void SGS_backward_sweep( Array3& u, Array2& viscx, Array2& viscy, Array2& dt, Ar
         for (j = jmax-2; j > 0; j--) {
 
             uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
-            beta2 = pow2(max(uvel2, rkappa * vel2ref));
+            beta2 = max(uvel2, rkappa * vel2ref);
 
             dpdx = (u(i + 1, j, 0) - u(i - 1, j, 0)) * half / dx;
             dudx = (u(i + 1, j, 1) - u(i - 1, j, 1)) * half / dx;
@@ -1177,7 +1167,7 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
         for (i = 1; i < imax-1; i++) {
 
             uvel2 = pow2(uold(i, j, 1)) + pow2(uold(i, j, 2));
-            beta2 = pow2(max(uvel2, rkappa * vel2ref));
+            beta2 = max(uvel2, rkappa * vel2ref);
 
             dpdx = (uold(i + 1, j, 0) - uold(i - 1, j, 0)) * half / dx;
             dudx = (uold(i + 1, j, 1) - uold(i - 1, j, 1)) * half / dx;
@@ -1202,7 +1192,7 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
     //for (int j = jmax-1; j >= 0; j--) {
     //    for (int i = 0; i < imax; i++) {
 
-    //        printf("%10.1e ", u(i, j, 0));
+    //        printf("%9.1e ", s(i, j, 0));
     //    }
     //    printf("\n\n");
     //}
@@ -1506,7 +1496,7 @@ int main()
     for (n = ninit; n<= nmax; n++)
     {
 
-        if (n == 500) {
+        if (n == 750) {
             continue;
         }
 
