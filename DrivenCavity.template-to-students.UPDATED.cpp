@@ -11,8 +11,8 @@
 using namespace std;
 
 /************* Following are fixed parameters for array sizes **************/
-#define imax 33     /* Number of points in the x-direction (use odd numbers only) */
-#define jmax 33     /* Number of points in the y-direction (use odd numbers only) */
+#define imax 65     /* Number of points in the x-direction (use odd numbers only) */
+#define jmax 65     /* Number of points in the y-direction (use odd numbers only) */
 #define neq 3       /* Number of equation to be solved ( = 3: mass, x-mtm, y-mtm) */
 
 /**********************************************/
@@ -40,14 +40,14 @@ using namespace std;
   
 /*--------- User sets inputs here  --------*/
 
-  const int nmax = 100000;             /* Maximum number of iterations */
+  const int nmax = 500000;             /* Maximum number of iterations */
   const int iterout = 5000;             /* Number of time steps between solution output */
   const int imms = 1;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
   const int isgs = 0;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
   const int irstr = 0;                  /* Restart flag: = 1 for restart (file 'restart.in', = 0 for initial run */
   const int ipgorder = 0;               /* Order of pressure gradient: 0 = 2nd, 1 = 3rd (not needed) */
   const int lim = 0;                    /* variable to be used as the limiter sensor (= 0 for pressure) */
-  const int residualOut = 100;           /* Number of timesteps between residual output */
+  const int residualOut = 1000;           /* Number of timesteps between residual output */
 
   const double cfl  = 0.1;              /* CFL number used to determine time step */
   const double Cx = 0.01;               /* Parameter for 4th order artificial viscosity in x */
@@ -1260,25 +1260,14 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
     for (j = 0; j < jmax; j++) {
         for (i = 0; i < imax; i++) {
 
-            double deltat = deltatmax;
-            res[0] += pow2((u(i, j, 0) - uold(i, j, 0)) / deltat);
-            res[1] += pow2((u(i, j, 1) - uold(i, j, 1)) / deltat);
-            res[2] += pow2((u(i, j, 2) - uold(i, j, 2)) / deltat);
-
-            double rand1 = pow2((u(i, j, 0) - uold(i, j, 0)) / deltat);
-            double rand2 = pow2((u(i, j, 1) - uold(i, j, 1)) / deltat);
-            double rand3 = pow2((u(i, j, 2) - uold(i, j, 2)) / deltat);
-
-            double debug3 = res[0];
-            double debug4 = res[1];
-            double debug5 = res[2];
+            double uvel2 = pow2(uold(i, j, 1)) + pow2(uold(i, j, 2));
+            double beta2 = max(uvel2, rkappa * vel2ref);
+            res[0] += pow2((u(i, j, 0) - uold(i, j, 0)) / (-beta2* deltatmax));
+            res[1] += pow2((u(i, j, 1) - uold(i, j, 1)) / (-deltatmax*rhoinv));
+            res[2] += pow2((u(i, j, 2) - uold(i, j, 2)) / (-deltatmax*rhoinv));
 
         }
     }
-
-    double debug = sqrt(res[0] / (imax * jmax));
-    double debug1 = sqrt(res[1] / (imax * jmax));
-    double debug2 = sqrt(res[2] / (imax * jmax));
 
     res[0] = sqrt(res[0] / (imax * jmax));
     res[1] = sqrt(res[1] / (imax * jmax));
@@ -1487,11 +1476,6 @@ int main()
     /*========== Main Loop ==========*/
     for (n = ninit; n<= nmax; n++)
     {
-
-        if (n == 750) {
-            continue;
-        }
-
 
         /* Calculate time step */  
         compute_time_step( u, dt, dtmin );
