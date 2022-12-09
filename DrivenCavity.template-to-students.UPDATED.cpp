@@ -11,8 +11,8 @@
 using namespace std;
 
 /************* Following are fixed parameters for array sizes **************/
-#define imax 65     /* Number of points in the x-direction (use odd numbers only) */
-#define jmax 65     /* Number of points in the y-direction (use odd numbers only) */
+#define imax 33     /* Number of points in the x-direction (use odd numbers only) */
+#define jmax 33     /* Number of points in the y-direction (use odd numbers only) */
 #define neq 3       /* Number of equation to be solved ( = 3: mass, x-mtm, y-mtm) */
 
 /**********************************************/
@@ -40,7 +40,7 @@ using namespace std;
   
 /*--------- User sets inputs here  --------*/
 
-  const int nmax = 10000;             /* Maximum number of iterations */
+  const int nmax = 100000;             /* Maximum number of iterations */
   const int iterout = 5000;             /* Number of time steps between solution output */
   const int imms = 1;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
   const int isgs = 0;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
@@ -603,16 +603,6 @@ void bndrymms( Array3& u )
 
         u(i,jmax-1,0) = two*u(i,jmax-2,0) - u(i,jmax-3,0);   /* 2nd Order BC */
     }
-
-    
-    /*printf("boundary conditions for manufactured solution\n");
-    for (j = 0; j < jmax; j++) {
-        for (i = 0; i < imax; i++) {
-
-            printf("%10.1e ", u(i, j, 0));
-        }
-        printf("\n\n");
-    }*/
     
 }
 
@@ -950,7 +940,7 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
 /* !************************************************************** */
     
     for (j = 2; j < jmax - 2; j++) {
-        for (i = 2; i < imax-2; i++) {
+        for (i = 2; i < imax - 2; i++) {
 
             uvel2 = pow2(u(i, j, 1)) + pow2(u(i, j, 2));
             beta2 = max(uvel2, rkappa*vel2ref);
@@ -1183,7 +1173,7 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
             d2udy2 = (uold(i, j + 1, 1) - two * uold(i, j, 1) + uold(i, j - 1, 1)) / pow2(dy);
             d2vdy2 = (uold(i, j + 1, 2) - two * uold(i, j, 2) + uold(i, j - 1, 2)) / pow2(dy);
 
-            u(i, j, 0) = uold(i, j, 0) - beta2 * deltatmax * (rho * dudx + rho * dvdy + viscx(i, j) + viscy(i, j) - s(i, j, 0));
+            u(i, j, 0) = uold(i, j, 0) - beta2 * deltatmax * (rho * dudx + rho * dvdy - viscx(i, j) - viscy(i, j) - s(i, j, 0));
             u(i, j, 1) = uold(i, j, 1) - deltatmax * rhoinv * (rho * uold(i, j, 1) * dudx + rho * uold(i, j, 2) * dudy + dpdx - rmu * d2udx2 - rmu * d2udy2 - s(i, j, 1));
             u(i, j, 2) = uold(i, j, 2) - deltatmax * rhoinv * (rho * uold(i, j, 1) * dvdx + rho * uold(i, j, 2) * dvdy + dpdy - rmu * d2vdx2 - rmu * d2vdy2 - s(i, j, 2));
 
