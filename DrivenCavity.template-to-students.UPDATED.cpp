@@ -40,7 +40,7 @@ using namespace std;
   
 /*--------- User sets inputs here  --------*/
 
-  const int nmax = 500;             /* Maximum number of iterations */
+  const int nmax = 1000;             /* Maximum number of iterations */
   const int iterout = 5000;             /* Number of time steps between solution output */
   const int imms = 1;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
   const int isgs = 0;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
@@ -981,8 +981,8 @@ void Compute_Artificial_Viscosity( Array3& u, Array2& viscx, Array2& viscy )
         viscx(i, j) = two * viscx(2, j) - viscx(3, j);
 
         i = imax - 2;
-        viscy(i, j) = two * viscy(i - 2, j) - viscy(i - 3, j);
-        viscx(i, j) = two * viscx(i - 2, j) - viscx(i - 3, j);
+        viscy(i, j) = two * viscy(i - 1, j) - viscy(i - 2, j);
+        viscx(i, j) = two * viscx(i - 1, j) - viscx(i - 2, j);
 
     }
 
@@ -1199,7 +1199,7 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
     }
 
     //printf("Point Jacobi\n");
-    //for (int j = 0; j < jmax; j++) {
+    //for (int j = jmax-1; j >= 0; j--) {
     //    for (int i = 0; i < imax; i++) {
 
     //        printf("%10.1e ", u(i, j, 0));
@@ -1207,7 +1207,7 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
     //    printf("\n\n");
     //}
 
-
+    
 }
 
 /**************************************************************************/
@@ -1264,6 +1264,7 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
   int j;                       /* j index (y direction) */
   int k;                       /* k index (# of equations) */
 
+
   /* Compute iterative residuals to monitor iterative convergence */
 
     res[0] = zero;              //Reset to zero (as they are sums)
@@ -1278,16 +1279,24 @@ void check_iterative_convergence(int n, Array3& u, Array3& uold, Array2& dt, dou
         for (i = 0; i < imax; i++) {
 
             double deltat = dt(i, j);
-            double res0 = pow2((u(i, j, 0) - uold(i, j, 0)) / deltat);
-            double res1 = pow2((u(i, j, 1) - uold(i, j, 1)) / deltat);
-            double res2 = pow2((u(i, j, 2) - uold(i, j, 2)) / deltat);
+            res[0] += pow2((u(i, j, 0) - uold(i, j, 0)) / deltat);
+            res[1] += pow2((u(i, j, 1) - uold(i, j, 1)) / deltat);
+            res[2] += pow2((u(i, j, 2) - uold(i, j, 2)) / deltat);
 
-            res[0] += res0;
-            res[1] += res1;
-            res[2] += res2;
+            double rand1 = pow2((u(i, j, 0) - uold(i, j, 0)) / deltat);
+            double rand2 = pow2((u(i, j, 1) - uold(i, j, 1)) / deltat);
+            double rand3 = pow2((u(i, j, 2) - uold(i, j, 2)) / deltat);
+
+            double debug3 = res[0];
+            double debug4 = res[1];
+            double debug5 = res[2];
 
         }
     }
+
+    double debug = sqrt(res[0] / (imax * jmax));
+    double debug1 = sqrt(res[1] / (imax * jmax));
+    double debug2 = sqrt(res[2] / (imax * jmax));
 
     res[0] = sqrt(res[0] / (imax * jmax));
     res[1] = sqrt(res[1] / (imax * jmax));
@@ -1496,6 +1505,12 @@ int main()
     /*========== Main Loop ==========*/
     for (n = ninit; n<= nmax; n++)
     {
+
+        if (n == 500) {
+            continue;
+        }
+
+
         /* Calculate time step */  
         compute_time_step( u, dt, dtmin );
            
