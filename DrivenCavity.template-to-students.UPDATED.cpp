@@ -11,8 +11,8 @@
 using namespace std;
 
 /************* Following are fixed parameters for array sizes **************/
-#define imax 65     /* Number of points in the x-direction (use odd numbers only) */
-#define jmax 65    /* Number of points in the y-direction (use odd numbers only) */
+#define imax 33     /* Number of points in the x-direction (use odd numbers only) */
+#define jmax 33    /* Number of points in the y-direction (use odd numbers only) */
 #define neq 3       /* Number of equation to be solved ( = 3: mass, x-mtm, y-mtm) */
 
 /**********************************************/
@@ -42,8 +42,8 @@ using namespace std;
 
   const int nmax = 2000000;             /* Maximum number of iterations */
   const int iterout = 5000;             /* Number of time steps between solution output */
-  const int imms = 0;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
-  const int isgs = 0;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
+  const int imms = 1;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
+  const int isgs = 1;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
   const int irstr = 0;                  /* Restart flag: = 1 for restart (file 'restart.in', = 0 for initial run */
   const int ipgorder = 0;               /* Order of pressure gradient: 0 = 2nd, 1 = 3rd (not needed) */
   const int lim = 0;                    /* variable to be used as the limiter sensor (= 0 for pressure) */
@@ -1314,7 +1314,7 @@ void Discretization_Error_Norms( Array3& u )
     double rLinfnorm[neq];
 
     /* Only compute discretization error norms for manufactured solution */
-    if(imms==1)
+    if(imms==1 || imms==0)
     {
 
 /* !************************************************************** */
@@ -1352,6 +1352,12 @@ void Discretization_Error_Norms( Array3& u )
         }
 
         printf("%10e %10e %10e\n", rL2norm[0], rL2norm[1], rL2norm[2]);
+        fp5 = fopen("./denorms.dat", "w");
+        fprintf(fp5, "%4s %10s %10s %10s\n", "Norm","Continuity", "X-Mtm", "Y-Mtm");
+        fprintf(fp5, "L2   %10e %10e %10e\n",rL2norm[0], rL2norm[1], rL2norm[2]);
+        fprintf(fp5, "L1   %10e %10e %10e\n", rL1norm[0], rL1norm[1], rL1norm[2]);
+        fprintf(fp5, "Linf %10e %10e %10e\n", rLinfnorm[0], rLinfnorm[1], rLinfnorm[2]);
+        fclose(fp5);
 
     }
 }
