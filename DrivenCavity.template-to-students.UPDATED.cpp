@@ -11,8 +11,8 @@
 using namespace std;
 
 /************* Following are fixed parameters for array sizes **************/
-#define imax 65     /* Number of points in the x-direction (use odd numbers only) */
-#define jmax 65     /* Number of points in the y-direction (use odd numbers only) */
+#define imax 257     /* Number of points in the x-direction (use odd numbers only) */
+#define jmax 257    /* Number of points in the y-direction (use odd numbers only) */
 #define neq 3       /* Number of equation to be solved ( = 3: mass, x-mtm, y-mtm) */
 
 /**********************************************/
@@ -40,21 +40,21 @@ using namespace std;
   
 /*--------- User sets inputs here  --------*/
 
-  const int nmax = 500000;             /* Maximum number of iterations */
+  const int nmax = 2000000;             /* Maximum number of iterations */
   const int iterout = 5000;             /* Number of time steps between solution output */
   const int imms = 1;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
   const int isgs = 0;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
   const int irstr = 0;                  /* Restart flag: = 1 for restart (file 'restart.in', = 0 for initial run */
   const int ipgorder = 0;               /* Order of pressure gradient: 0 = 2nd, 1 = 3rd (not needed) */
   const int lim = 0;                    /* variable to be used as the limiter sensor (= 0 for pressure) */
-  const int residualOut = 1000;           /* Number of timesteps between residual output */
+  const int residualOut = 10000;           /* Number of timesteps between residual output */
 
-  const double cfl  = 0.1;              /* CFL number used to determine time step */
+  const double cfl  = 0.8;              /* CFL number used to determine time step */
   const double Cx = 0.01;               /* Parameter for 4th order artificial viscosity in x */
   const double Cy = 0.01;               /* Parameter for 4th order artificial viscosity in y */
   const double toler = 1.e-10;          /* Tolerance for iterative residual convergence */
   const double rkappa = 0.1;            /* Time derivative preconditioning constant */
-  const double Re = 100.0;              /* Reynolds number = rho*Uinf*L/rmu */
+  const double Re = 10.0;              /* Reynolds number = rho*Uinf*L/rmu */
   const double pinf = 0.801333844662;   /* Initial pressure (N/m^2) -> from MMS value at cavity center */
   const double uinf = 1.0;              /* Lid velocity (m/s) */
   const double rho = 1.0;               /* Density (kg/m^3) */
@@ -455,6 +455,7 @@ void initial(int& ninit, double& rtime, double resinit[neq], Array3& u, Array3& 
         if (fp4==NULL)
         {
             printf("Error opening restart file. Stopping.\n");
+            system("pause");
             exit (0);
         }      
         fscanf(fp4, "%d %lf", ninit, rtime); /* Need to known current iteration # and time value */
