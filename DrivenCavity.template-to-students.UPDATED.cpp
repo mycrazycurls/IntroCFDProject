@@ -11,8 +11,8 @@
 using namespace std;
 
 /************* Following are fixed parameters for array sizes **************/
-#define imax 257     /* Number of points in the x-direction (use odd numbers only) */
-#define jmax 257    /* Number of points in the y-direction (use odd numbers only) */
+#define imax 65     /* Number of points in the x-direction (use odd numbers only) */
+#define jmax 65    /* Number of points in the y-direction (use odd numbers only) */
 #define neq 3       /* Number of equation to be solved ( = 3: mass, x-mtm, y-mtm) */
 
 /**********************************************/
@@ -42,19 +42,19 @@ using namespace std;
 
   const int nmax = 2000000;             /* Maximum number of iterations */
   const int iterout = 5000;             /* Number of time steps between solution output */
-  const int imms = 1;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
+  const int imms = 0;                   /* Manufactured solution flag: = 1 for manuf. sol., = 0 otherwise */
   const int isgs = 0;                   /* Symmetric Gauss-Seidel  flag: = 1 for SGS, = 0 for point Jacobi */
   const int irstr = 0;                  /* Restart flag: = 1 for restart (file 'restart.in', = 0 for initial run */
   const int ipgorder = 0;               /* Order of pressure gradient: 0 = 2nd, 1 = 3rd (not needed) */
   const int lim = 0;                    /* variable to be used as the limiter sensor (= 0 for pressure) */
-  const int residualOut = 10000;           /* Number of timesteps between residual output */
+  const int residualOut = 100;           /* Number of timesteps between residual output */
 
-  const double cfl  = 0.8;              /* CFL number used to determine time step */
+  const double cfl  = 0.9;              /* CFL number used to determine time step */
   const double Cx = 0.01;               /* Parameter for 4th order artificial viscosity in x */
   const double Cy = 0.01;               /* Parameter for 4th order artificial viscosity in y */
   const double toler = 1.e-10;          /* Tolerance for iterative residual convergence */
   const double rkappa = 0.1;            /* Time derivative preconditioning constant */
-  const double Re = 10.0;              /* Reynolds number = rho*Uinf*L/rmu */
+  const double Re = 100.0;              /* Reynolds number = rho*Uinf*L/rmu */
   const double pinf = 0.801333844662;   /* Initial pressure (N/m^2) -> from MMS value at cavity center */
   const double uinf = 1.0;              /* Lid velocity (m/s) */
   const double rho = 1.0;               /* Density (kg/m^3) */
@@ -501,7 +501,6 @@ void bndry( Array3& u )
    for (j = 1; j < jmax - 1; j++) {
 
        i = 0;
-       u(i, j, 0) = zero;
        u(i, j, 1) = zero;
        u(i, j, 2) = zero;
 
@@ -509,7 +508,6 @@ void bndry( Array3& u )
        u(0, j, 0) = two * u(1, j, 0) - u(2, j, 0);    /* 2nd Order BC */
 
        i = imax - 1;
-       u(i, j, 0) = zero;
        u(i, j, 1) = zero;
        u(i, j, 2) = zero;
 
@@ -522,7 +520,6 @@ void bndry( Array3& u )
    for (i = 0; i < imax; i++) {
 
        j = 0; 
-       u(i, j, 0) = zero;
        u(i, j, 1) = zero;
        u(i, j, 2) = zero;
 
@@ -530,9 +527,8 @@ void bndry( Array3& u )
        u(i, 0, 0) = two * u(i, 1, 0) - u(i, 2, 0);   /* 2nd Order BC */
 
        j = jmax - 1;
-       u(i, j, 0) = uinf;
        u(i, j, 1) = uinf;
-       u(i, j, 2) = uinf;
+       u(i, j, 2) = zero;
 
        // Pressure top wall
        u(i, jmax - 1, 0) = two * u(i, jmax - 2, 0) - u(i, jmax - 3, 0);   /* 2nd Order BC */
@@ -1185,7 +1181,7 @@ void point_Jacobi( Array3& u, Array3& uold, Array2& viscx, Array2& viscy, Array2
     //for (int j = jmax-1; j >= 0; j--) {
     //    for (int i = 0; i < imax; i++) {
 
-    //        printf("%9.1e ", s(i, j, 0));
+    //        printf("%9.1e ", s(i, j, 1));
     //    }
     //    printf("\n\n");
     //}
@@ -1493,7 +1489,7 @@ int main()
         /* Check iterative convergence using L2 norms of iterative residuals */
         check_iterative_convergence(n, u, uold, dt, res, resinit, ninit, rtime, dtmin, conv);
 
-        if(conv<toler) 
+        if(conv<toler && n>1) 
         {
             fprintf(fp1, "%d %e %e %e %e\n",n, rtime, res[0], res[1], res[2]);
                 goto converged;
